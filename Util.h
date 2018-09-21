@@ -12,4 +12,12 @@ inline int string2Int(std::string str){
     return result;
 }
 
+inline double string2Double(std::string str){
+    std::stringstream ss;
+    double result;
+    ss << str;
+    ss >> result;
+    return result;
+}
+
 #endif  //UTIL_H

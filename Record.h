@@ -7,6 +7,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <stdio.h>
 
 class Record{
     bool isLegal;
@@ -22,7 +23,9 @@ public:
             isLegal(false), CPU_index(_index), time(_time), op(_op), prevName(_prevName), nextName(_nextName), prevState(_prevState), prevPid(_prevPid), nextPid(_nextPid){}
     Record(std::string line){
         // Delete all spaces in the front of line
+        //std::cout << "line: " << line << std::endl;
         line.erase(0, line.find_first_not_of(" "));
+        //std::cout << "line: " << line << std::endl;
         std::stringstream ss(line);
         std::string word;
 
@@ -30,27 +33,31 @@ public:
             // [00X]: index of CPU
             if(word[0] == '[' && word[word.length() - 1] == ']'){
                 CPU_index = string2Int(word.substr(1, word.length() - 2));
+                break;
             }
         }
         // d..X
         ss >> word;
-
-        //            intLen-
+        std::cout << word << std::endl;
+        //          dotIndex-
         //                  ↓ 
         // TIMESTAMP 2074248.138849:
         ss >> word;
         int dotIndex = word.find('.');
-        setTime(string2Int(word.substr(0, dotIndex)) + string2Int(word.substr(dotIndex + 1, word.length() - 1)));
+        setTime(string2Int(word.substr(0, dotIndex)) + string2Double(word.substr(dotIndex, word.length() - 1)));
+        printf("time： %f\n", time);
 
         // op(FUNCTION): sched_switch/sched_wakeup/sched_blocked_reason/tracing_mark_write
         ss >> word;
-        if(word  == "sched_switch"){
-            setOp(word);
+        if(word  == "sched_switch:"){
+            setOp(word.substr(0, word.length() - 1));
         }else{
             isLegal = false;
             return;
         }
+
         // prev_comm=FImgMed-duler 3 prev_pid=31918
+        ss >> word;
         int equalIndex = word.find('=');
         prevName = word.substr(equalIndex + 1, word.length());
         while(ss >> word){
@@ -73,6 +80,7 @@ public:
         // ==>
         ss >> word;
         // nextcomm=FImgMed-duler 3 next_pid=31918
+        ss >> word;
         equalIndex = word.find('=');
         nextName = word.substr(equalIndex + 1, word.length());
         while(ss >> word){
