@@ -1,7 +1,8 @@
 #include "Record.h"
 #include "Util.h"
+#include "ThreadTaskAnalyser.h"
 
-int main(){
+int main(int argc, char **argv){
     /* test Record ------ right
     std::string testStr1("           <idle>-0     (-----) [003] d..3 2074248.139074: sched_switch: prev_comm=swapper/3 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=rcu_sched next_pid=8 next_prio=120");
     std::string testStr2(" 16444    SensorService-1328  ( 1205) [007] ...1 2074248.140149: tracing_mark_write: E");
@@ -12,5 +13,20 @@ int main(){
     testRec1.print();
     testRec2.print();
     testRec3.print();*/
+    ThreadTaskAnalyser analyser;
+    std::string inFilename, outFilename;
+    if(argc == 3){
+        inFilename = std::string(*(argv + 1));
+        outFilename = std::string(*(argv + 2));
+    }else if(argc == 2){
+        inFilename = std::string(*(argv + 1));
+        std::cout << "Input the output filename you want to analyse:" << std::endl;
+        std::cin >> outFilename;
+    }else{
+        std::cout << "Input the input and output filename you want to analyse:" << std::endl;
+        std::cin >> inFilename;
+        std::cin >> outFilename;
+    }
+    analyser.loadFile(inFilename, outFilename);
     return 0;
 }

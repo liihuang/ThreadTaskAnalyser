@@ -38,14 +38,13 @@ public:
         }
         // d..X
         ss >> word;
-        std::cout << word << std::endl;
+        
         //          dotIndex-
         //                  ↓ 
         // TIMESTAMP 2074248.138849:
         ss >> word;
         int dotIndex = word.find('.');
         setTime(string2Int(word.substr(0, dotIndex)) + string2Double(word.substr(dotIndex, word.length() - 1)));
-        printf("time： %f\n", time);
 
         // op(FUNCTION): sched_switch/sched_wakeup/sched_blocked_reason/tracing_mark_write
         ss >> word;
@@ -98,11 +97,13 @@ public:
         return;
     }
 
+    bool getLegal(){return isLegal;}
     int getCPU_index(){return CPU_index;}
     double getTime(){return time;}
     std::string getOp(){return op;}
     std::string getPrevName(){return prevName;}
     std::string getNextName(){return nextName;}
+    std::string getPrevState(){return prevState;}
     int getPrevPid(){return prevPid;}
     int getNextPid(){return nextPid;}
 
