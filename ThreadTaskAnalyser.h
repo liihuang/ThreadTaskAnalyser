@@ -10,19 +10,20 @@
 #include <sstream>
 #include <iostream>
 
-#define MAX_THREAD_NUM 50000
-#define MAX_CPU_NUM 100
+#define MAX_THREAD_NUM 100000
+
 class ThreadTaskAnalyser{
     std::vector<MyThread> myThreads;
     int threadIndexDict[MAX_THREAD_NUM];
-    int threadOnCPU[MAX_CPU_NUM];
+    int numCPU;
     std::ifstream inFile;
     std::ofstream outFile;
 public:
-    ThreadTaskAnalyser() = default;
-    ThreadTaskAnalyser(std::string inFileName, std::string outFileName){
+    ThreadTaskAnalyser(): numCPU(0){
         std::fill(threadIndexDict, threadIndexDict + MAX_THREAD_NUM, -1);
-        std::fill(threadOnCPU, threadOnCPU + MAX_CPU_NUM, -1);
+    }
+    ThreadTaskAnalyser(std::string inFileName, std::string outFileName): numCPU(0){
+        std::fill(threadIndexDict, threadIndexDict + MAX_THREAD_NUM, -1);
         loadFile(inFileName, outFileName);
     }
     void loadFile(std::string inFileName, std::string outFileName){
@@ -32,11 +33,11 @@ public:
             std::cout << "Open file failed." << std::endl;
             return;
         }
-        outFile << "isLegal,CPU_index,time,FUNCTION,prev_comm,prev_pid,prev_state,next_comm,next_pid"<< std::endl; 
+        //outFile << "isLegal,CPU_index,time,FUNCTION,prev_comm,prev_pid,prev_state,next_comm,next_pid"<< std::endl; 
         parseInFile();
+        output2File();
     }
     void parseInFile(){
-        int numCPU = 0;
         bool recordsDetected = false;
         std::string line;
         while(getline(inFile, line)){
@@ -55,19 +56,14 @@ public:
                     ss2 >> word;// #P:XXX
                     word.erase(0,3);// XXX
                     numCPU = string2Int(word);
-                    std::cout << numCPU << std::endl;
                 }
             }else{
                 ss >> word;
                 if(!recordsDetected){
-                    if(word == "<idle>-0"){
-                        recordsDetected = true;
-                        std::cout << "record detected!" << std::endl;
-                        processRecord(line);
-                    }
+                    if(word == "#####") recordsDetected = true;
                 }else{
                     if(word == "</script>") break;// No data to process
-                    processRecord(line);
+                    else processRecord(line);
                 }
             }
         }   
@@ -87,7 +83,50 @@ public:
                     << record.getNextPid() << std::endl;
         }*/
         if(record.getLegal()){
-            
+            // #1: process previous thread
+            if(threadIndexDict[record.getPrevPid()] == -1){// New thread
+                MyThread newThread(record.getPrevName(), record.getPrevPid(), numCPU);
+
+                newThread.setStartTime(record.getTime());
+                newThread.setEndTime(record.getTime());
+                
+                myThreads.push_back(newThread);
+                threadIndexDict[record.getPrevPid()] = myThreads.size() - 1;
+            }else{//Exit thread
+                int threadIndex = threadIndexDict[record.getPrevPid()];
+                
+                myThreads[threadIndex].setEndTime(record.getTime());
+            }
+            // #2: process next thread
+            if(threadIndexDict[record.getNextPid()] == -1){// New thread
+                MyThread newThread(record.getNextName(), record.getNextPid(), numCPU);
+
+                newThread.setCurrentCPU(record.getCPU_index());
+                newThread.setStartTime(record.getTime());
+
+                myThreads.push_back(newThread);
+                threadIndexDict[record.getNextPid()] = myThreads.size() - 1;
+            }else{//Exist thread
+                int threadIndex = threadIndexDict[record.getNextPid()];
+
+                myThreads[threadIndex].setCurrentCPU(record.getCPU_index());
+                myThreads[threadIndex].setStartTime(record.getTime());
+            }
+        }
+    }
+    void output2File(){
+        outFile << "Thread,Pid";
+        for(int i = 0; i < numCPU; i++){
+            outFile << ",CPU" << i;
+            if(i == numCPU - 1) outFile << std::endl;
+        }
+        for(int i = 0; i < myThreads.size(); i++){
+            outFile << myThreads[i].getName() << "," << myThreads[i].getPid();
+            const std::vector<double> &totalTime = myThreads[i].getTotalTime();
+            for(int j = 0; j < numCPU; j++){
+                outFile << "," << totalTime[j];
+                if(j == numCPU - 1) outFile << std::endl;
+            }
         }
     }
 };

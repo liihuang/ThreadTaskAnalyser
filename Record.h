@@ -22,10 +22,8 @@ public:
     Record(int _index, double _time, std::string _op, std::string _prevName, std::string _nextName, std::string _prevState, int _prevPid, int _nextPid):
             isLegal(false), CPU_index(_index), time(_time), op(_op), prevName(_prevName), nextName(_nextName), prevState(_prevState), prevPid(_prevPid), nextPid(_nextPid){}
     Record(std::string line){
-        // Delete all spaces in the front of line
-        //std::cout << "line: " << line << std::endl;
         line.erase(0, line.find_first_not_of(" "));
-        //std::cout << "line: " << line << std::endl;
+
         std::stringstream ss(line);
         std::string word;
 

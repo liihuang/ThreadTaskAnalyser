@@ -18,7 +18,7 @@ public:
         currentCPU = -1;
         startTime = -1;
         endTime = -1;
-        totalTime.resize(numCPU);
+        totalTime.resize(numCPU, 0.0);
     }
     
     std::string getName(){return name;}
@@ -33,6 +33,7 @@ public:
     void setPid(int _pid){pid = _pid;}
     void setState(int _state){state = _state;}
     void setCurrentCPU(int _currentCPU){currentCPU = _currentCPU;}
+    
     void setStartTime(double _startTime){
         startTime = _startTime;
         setState(1);
@@ -40,11 +41,13 @@ public:
     void setEndTime(double _endTime){
         endTime = _endTime;
         setState(0);
-        updateTotalTime(currentCPU);
+        updateTotalTime();
+        setCurrentCPU(-1);
     }
 
-    void updateTotalTime(int cpuIndex){
-        totalTime[cpuIndex] += (endTime - startTime);
+    void updateTotalTime(){
+        if(currentCPU >= 0 && currentCPU < numCPU)
+            totalTime[currentCPU] += (endTime - startTime);
     }
 };
 
